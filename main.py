@@ -51,10 +51,10 @@ def main():
     # Creamos un cliente con todos sus datos correctos.
     try:
         cliente1 = Cliente(
-            "Carlos Pérez",
-            "1001",
-            "carlos@gmail.com",
-            "3101234567"
+            "Dora Yenis",
+            "1022",
+            "dorayenis@gmail.com",
+            "3101234561"
         )
 
         clientes.append(cliente1)
