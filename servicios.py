@@ -41,13 +41,17 @@ class Servicio(ABC):
     # Esta propiedad permite cambiar la disponibilidad.
     @disponible.setter
     def disponible(self, nuevo_estado):
+
         if not isinstance(nuevo_estado, bool):
-            raise ValueError("La disponibilidad debe ser verdadera o falsa.")
+            raise ValueError(
+                "La disponibilidad debe ser verdadera o falsa."
+            )
 
         self.__disponible = nuevo_estado
 
     # Revisamos si el servicio está disponible.
     def validar_disponibilidad(self):
+
         if not self.__disponible:
             raise ServicioNoDisponibleError(
                 f"El servicio {self.__nombre} no está disponible."
@@ -55,6 +59,7 @@ class Servicio(ABC):
 
     # Comprobamos que la duración sea correcta.
     def validar_duracion(self, duracion):
+
         if (
             not isinstance(duracion, (int, float))
             or isinstance(duracion, bool)
@@ -64,25 +69,40 @@ class Servicio(ABC):
                 "La duración debe ser un número mayor que cero."
             )
 
-    # Calculamos el costo aplicando impuestos y descuentos.
-    def aplicar_impuestos_descuentos(
-        self, costo, impuesto=0, descuento=0
-    ):
-        # Revisamos que el impuesto esté entre 0 y 100.
+    # Revisamos que los impuestos y descuentos sean válidos.
+    def validar_porcentajes(self, impuesto, descuento):
+
         if (
             not isinstance(impuesto, (int, float))
             or isinstance(impuesto, bool)
             or not 0 <= impuesto <= 100
         ):
-            raise ValueError("El impuesto debe estar entre 0 y 100.")
+            raise ValueError(
+                "El impuesto debe estar entre 0 y 100."
+            )
 
-        # Revisamos que el descuento esté entre 0 y 100.
         if (
             not isinstance(descuento, (int, float))
             or isinstance(descuento, bool)
             or not 0 <= descuento <= 100
         ):
-            raise ValueError("El descuento debe estar entre 0 y 100.")
+            raise ValueError(
+                "El descuento debe estar entre 0 y 100."
+            )
+
+    # Este método revisa los parámetros generales del servicio.
+    def validar_parametros(self, duracion, impuesto=0, descuento=0):
+
+        self.validar_duracion(duracion)
+        self.validar_porcentajes(impuesto, descuento)
+
+    # Calculamos el costo aplicando impuestos y descuentos.
+    def aplicar_impuestos_descuentos(
+        self, costo, impuesto=0, descuento=0
+    ):
+
+        # Comprobamos que los porcentajes sean correctos.
+        self.validar_porcentajes(impuesto, descuento)
 
         total = costo + (costo * impuesto / 100)
         total = total - (total * descuento / 100)
@@ -103,9 +123,17 @@ class Servicio(ABC):
 # Esta clase representa las reservas de salas.
 class ReservaSala(Servicio):
 
+    # Sobrescribimos la validación de parámetros.
+    def validar_parametros(self, duracion, impuesto=0, descuento=0):
+
+        # Utilizamos las validaciones generales de la clase principal.
+        super().validar_parametros(duracion, impuesto, descuento)
+
+    # Calculamos el costo de la reserva de sala.
     def calcular_costo(self, duracion, impuesto=0, descuento=0):
+
         self.validar_disponibilidad()
-        self.validar_duracion(duracion)
+        self.validar_parametros(duracion, impuesto, descuento)
 
         costo = self.tarifa * duracion
 
@@ -120,9 +148,17 @@ class ReservaSala(Servicio):
 # Esta clase representa el alquiler de equipos.
 class AlquilerEquipo(Servicio):
 
+    # Sobrescribimos la validación de parámetros.
+    def validar_parametros(self, duracion, impuesto=0, descuento=0):
+
+        # Utilizamos las validaciones generales de la clase principal.
+        super().validar_parametros(duracion, impuesto, descuento)
+
+    # Calculamos el costo del alquiler de equipo.
     def calcular_costo(self, duracion, impuesto=0, descuento=0):
+
         self.validar_disponibilidad()
-        self.validar_duracion(duracion)
+        self.validar_parametros(duracion, impuesto, descuento)
 
         costo = self.tarifa * duracion
 
@@ -137,9 +173,17 @@ class AlquilerEquipo(Servicio):
 # Esta clase representa las asesorías especializadas.
 class Asesoria(Servicio):
 
+    # Sobrescribimos la validación de parámetros.
+    def validar_parametros(self, duracion, impuesto=0, descuento=0):
+
+        # Utilizamos las validaciones generales de la clase principal.
+        super().validar_parametros(duracion, impuesto, descuento)
+
+    # Calculamos el costo de la asesoría.
     def calcular_costo(self, duracion, impuesto=0, descuento=0):
+
         self.validar_disponibilidad()
-        self.validar_duracion(duracion)
+        self.validar_parametros(duracion, impuesto, descuento)
 
         costo = self.tarifa * duracion
 
