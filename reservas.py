@@ -12,15 +12,15 @@ from logs import registrar_evento
 # Esta clase nos permite crear y manejar las reservas de los clientes.
 class Reserva:
 
-    def __init__(self, cliente, servicio, duracion):
+    def __init__(self, cliente=None, servicio=None, duracion=None):
 
-        # Revisamos que los datos necesarios para la reserva estén completos.
+        # Revisamos que los datos necesarios estén completos.
         if cliente is None or servicio is None or duracion is None:
             raise DatoFaltanteError(
                 "Faltan datos para poder crear la reserva."
             )
 
-        # Comprobamos que el cliente sea un objeto de la clase Cliente.
+        # Comprobamos que el cliente sea de la clase Cliente.
         if not isinstance(cliente, Cliente):
             raise ReservaInvalidaError(
                 "El cliente ingresado no es válido."
@@ -48,12 +48,12 @@ class Reserva:
         self.__duracion = duracion
         self.__estado = "Pendiente"
 
-        # Avisamos que se creó una nueva reserva.
+        # Registramos que se creó una nueva reserva.
         registrar_evento(
             f"Se creó una reserva para el cliente {cliente.nombre}."
         )
 
-    # Estas propiedades permiten consultar la información de la reserva.
+    # Estas propiedades permiten consultar los datos de la reserva.
     @property
     def cliente(self):
         return self.__cliente
@@ -70,8 +70,8 @@ class Reserva:
     def estado(self):
         return self.__estado
 
-    # Este método permite calcular el costo de la reserva.
-    # También podemos agregar impuestos y descuentos si se necesitan.
+    # Este método calcula el costo de la reserva.
+    # También permite agregar impuestos y descuentos.
     def calcular_total(self, impuesto=0, descuento=0):
         try:
             total = self.__servicio.calcular_costo(
@@ -79,9 +79,11 @@ class Reserva:
                 impuesto,
                 descuento
             )
+
             return total
 
         except Exception as error:
+            # Conservamos el error original para conocer su causa.
             raise ReservaInvalidaError(
                 "No fue posible calcular el costo de la reserva."
             ) from error
@@ -89,7 +91,7 @@ class Reserva:
     # Este método permite confirmar una reserva.
     def confirmar(self):
 
-        # Solo se pueden confirmar las reservas que están pendientes.
+        # Solo se pueden confirmar las reservas pendientes.
         if self.__estado != "Pendiente":
             raise OperacionNoPermitidaError(
                 "Esta reserva no se puede confirmar."
@@ -115,7 +117,7 @@ class Reserva:
                 "No se puede cancelar una reserva que ya fue procesada."
             )
 
-        # Tampoco permitimos cancelar una reserva que ya estaba cancelada.
+        # Revisamos que la reserva no esté cancelada.
         if self.__estado == "Cancelada":
             raise OperacionNoPermitidaError(
                 "Esta reserva ya se encuentra cancelada."
@@ -129,7 +131,7 @@ class Reserva:
 
         return "La reserva fue cancelada correctamente."
 
-    # Este método permite procesar una reserva que ya fue confirmada.
+    # Este método permite procesar una reserva confirmada.
     def procesar(self):
 
         # Primero comprobamos que la reserva esté confirmada.
@@ -138,7 +140,7 @@ class Reserva:
                 "Solo se pueden procesar las reservas confirmadas."
             )
 
-        # Calculamos el valor de la reserva.
+        # Calculamos el costo de la reserva.
         total = self.calcular_total()
 
         self.__estado = "Procesada"

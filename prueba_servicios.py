@@ -1,109 +1,175 @@
 
-from servicios import ReservaSala, AlquilerEquipo, Asesoria
-from logs import registrar_evento, registrar_error
+from servicios import (
+    Servicio,
+    ReservaSala,
+    AlquilerEquipo,
+    Asesoria
+)
+
+from excepciones import ServicioNoDisponibleError
+from logs import (
+    registrar_evento,
+    registrar_advertencia,
+    registrar_error
+)
 
 
 print("SISTEMA DE PRUEBA DE SERVICIOS - SOFTWARE FJ")
 
 servicios = []
 
+# Inicializamos las variables para evitar errores si falla una creación.
+sala = None
+equipo = None
+asesoria = None
+
+
+print("\n1. CREACIÓN DE SERVICIOS")
+
+# Creamos una reserva de sala.
 try:
     sala = ReservaSala("Sala de reuniones", 50000)
     servicios.append(sala)
+
     print("\nServicio creado:", sala.describir_servicio())
+
     registrar_evento("Se creó una reserva de sala.")
 
-except Exception as error:
+except ValueError as error:
     print("Error al crear la sala:", error)
     registrar_error(f"Error al crear sala: {error}")
 
 
+# Creamos un alquiler de equipo.
 try:
     equipo = AlquilerEquipo("Computador portátil", 30000)
     servicios.append(equipo)
+
     print("\nServicio creado:", equipo.describir_servicio())
+
     registrar_evento("Se creó un alquiler de equipo.")
 
-except Exception as error:
+except ValueError as error:
     print("Error al crear el equipo:", error)
     registrar_error(f"Error al crear equipo: {error}")
 
 
+# Creamos una asesoría.
 try:
     asesoria = Asesoria("Asesoría tecnológica", 100000)
     servicios.append(asesoria)
+
     print("\nServicio creado:", asesoria.describir_servicio())
+
     registrar_evento("Se creó una asesoría.")
 
-except Exception as error:
+except ValueError as error:
     print("Error al crear la asesoría:", error)
     registrar_error(f"Error al crear asesoría: {error}")
 
 
-try:
-    costo = sala.calcular_costo(2)
-    print("\nCosto de la sala:", costo)
-    registrar_evento("Se calculó el costo de la sala.")
+print("\n2. PRUEBA DE POLIMORFISMO")
 
-except Exception as error:
-    print("Error:", error)
-    registrar_error(str(error))
+# Recorremos los servicios usando la misma lista.
+# Cada objeto utiliza sus propios métodos.
+for servicio in servicios:
 
+    try:
+        print("\nDescripción:", servicio.describir_servicio())
 
-try:
-    costo = equipo.calcular_costo(2)
-    print("\nCosto del equipo:", costo)
-    registrar_evento("Se calculó el costo del equipo.")
+        costo = servicio.calcular_costo(2)
 
-except Exception as error:
-    print("Error:", error)
-    registrar_error(str(error))
+        print("Costo por 2 horas:", f"${costo:,.2f}")
 
+        registrar_evento(
+            f"Se calculó el costo de: {servicio.describir_servicio()}."
+        )
 
-try:
-    costo = asesoria.calcular_costo(2, impuesto=19)
-    print("\nCosto de asesoría con impuesto:", costo)
-    registrar_evento("Se calculó la asesoría con impuesto.")
-
-except Exception as error:
-    print("Error:", error)
-    registrar_error(str(error))
+    except (ServicioNoDisponibleError, ValueError) as error:
+        print("No se pudo calcular el servicio:", error)
+        registrar_error(str(error))
 
 
-try:
-    costo = sala.calcular_costo(2, descuento=10)
-    print("\nCosto de sala con descuento:", costo)
-    registrar_evento("Se calculó la sala con descuento.")
+print("\n3. PRUEBAS DE IMPUESTOS Y DESCUENTOS")
 
-except Exception as error:
-    print("Error:", error)
-    registrar_error(str(error))
+# Calculamos el costo de la asesoría con impuestos.
+if asesoria is not None:
+    try:
+        costo = asesoria.calcular_costo(2, impuesto=19)
+
+        print("\nCosto de asesoría con impuesto:")
+        print(f"${costo:,.2f}")
+
+        registrar_evento("Se calculó la asesoría con impuesto.")
+
+    except (ServicioNoDisponibleError, ValueError) as error:
+        print("Error:", error)
+        registrar_error(str(error))
 
 
+# Calculamos el costo de la sala con descuento.
+if sala is not None:
+    try:
+        costo = sala.calcular_costo(2, descuento=10)
+
+        print("\nCosto de sala con descuento:")
+        print(f"${costo:,.2f}")
+
+        registrar_evento("Se calculó la sala con descuento.")
+
+    except (ServicioNoDisponibleError, ValueError) as error:
+        print("Error:", error)
+        registrar_error(str(error))
+
+
+print("\n4. PRUEBAS DE ERRORES")
+
+# Intentamos crear un servicio con una tarifa incorrecta.
 try:
     servicio_invalido = ReservaSala("Sala incorrecta", -5000)
 
-except Exception as error:
+except ValueError as error:
     print("\nError controlado:", error)
-    registrar_error(f"Intento de crear servicio inválido: {error}")
+
+    registrar_advertencia(
+        f"Intento de crear servicio inválido: {error}"
+    )
 
 
-try:
-    costo = equipo.calcular_costo(0)
+# Intentamos calcular un servicio con duración incorrecta.
+if equipo is not None:
+    try:
+        costo = equipo.calcular_costo(0)
 
-except Exception as error:
-    print("\nError controlado:", error)
-    registrar_error(f"Duración incorrecta: {error}")
+    except ValueError as error:
+        print("\nError controlado:", error)
+
+        registrar_advertencia(
+            f"Duración incorrecta: {error}"
+        )
 
 
-try:
-    sala.disponible = False
-    costo = sala.calcular_costo(2)
+# Intentamos utilizar un servicio que no está disponible.
+if sala is not None:
+    try:
+        sala.disponible = False
+        sala.calcular_costo(2)
 
-except Exception as error:
-    print("\nError controlado:", error)
-    registrar_error(f"Servicio no disponible: {error}")
+    except ServicioNoDisponibleError as error:
+        print("\nError controlado:", error)
+
+        registrar_advertencia(
+            f"Servicio no disponible: {error}"
+        )
+
+    finally:
+        # Dejamos nuevamente disponible la sala.
+        sala.disponible = True
+
+        print("Terminó la prueba de disponibilidad.")
 
 
 print("\nLas pruebas finalizaron.")
 print("El programa continuó ejecutándose a pesar de los errores.")
+
+registrar_evento("Finalizaron las pruebas independientes de servicios.")
